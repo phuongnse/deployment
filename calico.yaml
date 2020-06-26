@@ -3548,7 +3548,7 @@ spec:
               value: "k8s,bgp"
             # Specify interface
             - name: IP_AUTODETECTION_METHOD
-              value: "interface=eth1"
+              value: "interface=eth.*"
             # Auto-detect the BGP IP address.
             - name: IP
               value: "autodetect"
