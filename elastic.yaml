@@ -11,7 +11,7 @@ metadata:
   name: elasticsearch
   namespace: elastic-system
 spec:
-  version: 7.7.0
+  version: 7.8.0
   nodeSets:
   - name: default
     count: 1
@@ -38,7 +38,7 @@ metadata:
   name: kibana
   namespace: elastic-system
 spec:
-  version: 7.7.0
+  version: 7.8.0
   count: 1
   elasticsearchRef:
     name: elasticsearch
@@ -55,7 +55,7 @@ metadata:
 spec:
   secretName: kibana-certificate-secret
   issuerRef:
-    name: letsencrypt-production
+    name: letsencrypt
     kind: ClusterIssuer
   dnsNames:
     - kibana.phuongn.dev
