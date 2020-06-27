@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: filebeat-config-map
+  name: filebeat-config
   namespace: elastic-system
   labels:
     k8s-app: filebeat
@@ -121,7 +121,7 @@ spec:
       - name: config
         configMap:
           defaultMode: 0600
-          name: filebeat-config-map
+          name: filebeat-config
       - name: certs
         secret:
           secretName: elasticsearch-es-http-certs-public
