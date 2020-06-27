@@ -1,0 +1,15 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: index
+  namespace: index
+spec:
+  secretName: index
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  dnsNames:
+    - phuongn.dev
+    - '*.phuongn.dev'
+---
