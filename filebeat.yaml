@@ -8,22 +8,10 @@ metadata:
     k8s-app: filebeat
 data:
   filebeat.yml: |-
-    #filebeat.inputs:
-    #- type: container
-    #  paths:
-    #    - /var/log/containers/*.log
-    #  processors:
-    #    - add_kubernetes_metadata:
-    #        host: ${NODE_NAME}
-    #        matchers:
-    #        - logs_path:
-    #            logs_path: "/var/log/containers/"
-
-    # To enable hints based autodiscover, remove `filebeat.inputs` configuration and uncomment this:
     filebeat.autodiscover:
       providers:
         - type: kubernetes
-          node: ${NODE_NAME}
+          host: ${NODE_NAME}
           hints.enabled: true
           hints.default_config:
             type: container
@@ -34,15 +22,12 @@ data:
       - add_cloud_metadata:
       - add_host_metadata:
 
-    cloud.id: ${ELASTIC_CLOUD_ID}
-    cloud.auth: ${ELASTIC_CLOUD_AUTH}
-
     output.elasticsearch:
-      hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
+      hosts: ['https://${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
       username: ${ELASTICSEARCH_USERNAME}
       password: ${ELASTICSEARCH_PASSWORD}
       ssl.certificate_authorities:
-        - /etc/certificate/ca.crt
+      - /mnt/elastic/tls.crt
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -66,28 +51,20 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: filebeat
-        image: docker.elastic.co/beats/filebeat:7.7.0
+        image: docker.elastic.co/beats/filebeat:7.8.0
         args: [
           "-c", "/etc/filebeat.yml",
           "-e",
         ]
         env:
         - name: ELASTICSEARCH_HOST
-          value: https://elasticsearch-es-http
+          value: elasticsearch-es-http
         - name: ELASTICSEARCH_PORT
           value: "9200"
         - name: ELASTICSEARCH_USERNAME
           value: elastic
         - name: ELASTICSEARCH_PASSWORD
-          # valueFrom:
-          #   secretKeyRef:
-          #     name: elasticsearch-password
-          #     key: password
           value: HZE8U843FCEMgi6167vZ4WR0
-        - name: ELASTIC_CLOUD_ID
-          value:
-        - name: ELASTIC_CLOUD_AUTH
-          value:
         - name: NODE_NAME
           valueFrom:
             fieldRef:
@@ -107,10 +84,6 @@ spec:
           mountPath: /etc/filebeat.yml
           readOnly: true
           subPath: filebeat.yml
-        - name: certs
-          mountPath: /etc/certificate/ca.crt
-          readOnly: true
-          subPath: ca.crt
         - name: data
           mountPath: /usr/share/filebeat/data
         - name: varlibdockercontainers
@@ -119,14 +92,15 @@ spec:
         - name: varlog
           mountPath: /var/log
           readOnly: true
+        - name: certs
+          mountPath: /mnt/elastic/tls.crt
+          readOnly: true
+          subPath: tls.crt
       volumes:
       - name: config
         configMap:
           defaultMode: 0600
           name: filebeat-config
-      - name: certs
-        secret:
-          secretName: elasticsearch-es-http-certs-public
       - name: varlibdockercontainers
         hostPath:
           path: /var/lib/docker/containers
@@ -138,8 +112,11 @@ spec:
         hostPath:
           path: /var/lib/filebeat-data
           type: DirectoryOrCreate
+      - name: certs
+        secret:
+          secretName: elasticsearch-es-http-certs-public
 ---
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
   name: filebeat
@@ -152,7 +129,7 @@ roleRef:
   name: filebeat
   apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
   name: filebeat
