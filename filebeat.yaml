@@ -79,10 +79,6 @@ spec:
         - name: ELASTICSEARCH_USERNAME
           value: elastic
         - name: ELASTICSEARCH_PASSWORD
-          # valueFrom:
-          #   secretKeyRef:
-          #     name: elasticsearch-password
-          #     key: password
           value: HZE8U843FCEMgi6167vZ4WR0
         - name: ELASTIC_CLOUD_ID
           value:
