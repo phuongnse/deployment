@@ -2,33 +2,32 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: filebeat-config
-  namespace: kube-system
+  name: filebeat-config-map
+  namespace: elastic-system
   labels:
     k8s-app: filebeat
 data:
   filebeat.yml: |-
-    filebeat.inputs:
-    - type: container
-      paths:
-        - /var/log/containers/*.log
-      processors:
-        - add_kubernetes_metadata:
-            host: ${NODE_NAME}
-            matchers:
-            - logs_path:
-                logs_path: "/var/log/containers/"
-
+    #filebeat.inputs:
+    #- type: container
+    #  paths:
+    #    - /var/log/containers/*.log
+    #  processors:
+    #    - add_kubernetes_metadata:
+    #        host: ${NODE_NAME}
+    #        matchers:
+    #        - logs_path:
+    #            logs_path: "/var/log/containers/"
     # To enable hints based autodiscover, remove `filebeat.inputs` configuration and uncomment this:
-    #filebeat.autodiscover:
-    #  providers:
-    #    - type: kubernetes
-    #      node: ${NODE_NAME}
-    #      hints.enabled: true
-    #      hints.default_config:
-    #        type: container
-    #        paths:
-    #          - /var/log/containers/*${data.kubernetes.container.id}.log
+    filebeat.autodiscover:
+      providers:
+        - type: kubernetes
+          node: ${NODE_NAME}
+          hints.enabled: true
+          hints.default_config:
+            type: container
+            paths:
+              - /var/log/containers/*${data.kubernetes.container.id}.log
 
     processors:
       - add_cloud_metadata:
@@ -41,12 +40,14 @@ data:
       hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
       username: ${ELASTICSEARCH_USERNAME}
       password: ${ELASTICSEARCH_PASSWORD}
+      ssl.certificate_authorities:
+        - /etc/certificate/ca.crt
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: filebeat
-  namespace: kube-system
+  namespace: elastic-system
   labels:
     k8s-app: filebeat
 spec:
@@ -64,20 +65,23 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: filebeat
-        image: docker.elastic.co/beats/filebeat:8.0.0
+        image: docker.elastic.co/beats/filebeat:7.8.0
         args: [
           "-c", "/etc/filebeat.yml",
           "-e",
         ]
         env:
         - name: ELASTICSEARCH_HOST
-          value: elasticsearch
+          value: https://elasticsearch-es-http
         - name: ELASTICSEARCH_PORT
           value: "9200"
         - name: ELASTICSEARCH_USERNAME
           value: elastic
         - name: ELASTICSEARCH_PASSWORD
-          value: changeme
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-password
+              key: password
         - name: ELASTIC_CLOUD_ID
           value:
         - name: ELASTIC_CLOUD_AUTH
@@ -101,6 +105,10 @@ spec:
           mountPath: /etc/filebeat.yml
           readOnly: true
           subPath: filebeat.yml
+        - name: certs
+          mountPath: /etc/certificate/ca.crt
+          readOnly: true
+          subPath: ca.crt
         - name: data
           mountPath: /usr/share/filebeat/data
         - name: varlibdockercontainers
@@ -113,7 +121,10 @@ spec:
       - name: config
         configMap:
           defaultMode: 0600
-          name: filebeat-config
+          name: filebeat-config-map
+      - name: certs
+        secret:
+          secretName: elasticsearch-es-http-certs-public
       - name: varlibdockercontainers
         hostPath:
           path: /var/lib/docker/containers
@@ -133,7 +144,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: filebeat
-  namespace: kube-system
+  namespace: elastic-system
 roleRef:
   kind: ClusterRole
   name: filebeat
@@ -159,7 +170,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: filebeat
-  namespace: kube-system
+  namespace: elastic-system
   labels:
     k8s-app: filebeat
 ---
