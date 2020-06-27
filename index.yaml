@@ -7,10 +7,10 @@ metadata:
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: index
+  name: index-certificate
   namespace: index
 spec:
-  secretName: index
+  secretName: index-secret
   issuerRef:
     name: letsencrypt
     kind: ClusterIssuer
