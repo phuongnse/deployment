@@ -12,7 +12,7 @@ metadata:
 spec:
   secretName: index-secret
   issuerRef:
-    name: letsencrypt
+    name: letsencrypt-production
     kind: ClusterIssuer
   dnsNames:
     - phuongn.dev
