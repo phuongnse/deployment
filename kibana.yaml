@@ -22,7 +22,7 @@ metadata:
 spec:
   secretName: kibana-secret
   issuerRef:
-    name: letsencrypt
+    name: letsencrypt-production
     kind: ClusterIssuer
   dnsNames:
     - kibana.phuongn.dev
