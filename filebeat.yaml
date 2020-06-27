@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -169,3 +170,4 @@ metadata:
   namespace: elastic-system
   labels:
     k8s-app: filebeat
+---
