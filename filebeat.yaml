@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: filebeat-config
-  namespace: default
+  namespace: elastic-system
   labels:
     k8s-app: filebeat
 data:
@@ -25,7 +25,7 @@ data:
         - type: kubernetes
           node: ${NODE_NAME}
           hints.enabled: true
-          hints.default_config:
+          hints.elastic-system_config:
             type: container
             paths:
               - /var/log/containers/*${data.kubernetes.container.id}.log
@@ -48,7 +48,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: filebeat
-  namespace: default
+  namespace: elastic-system
   labels:
     k8s-app: filebeat
 spec:
@@ -121,7 +121,7 @@ spec:
       volumes:
       - name: config
         configMap:
-          defaultMode: 0600
+          elastic-systemMode: 0600
           name: filebeat-config
       - name: certs
         secret:
@@ -145,7 +145,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: filebeat
-  namespace: default
+  namespace: elastic-system
 roleRef:
   kind: ClusterRole
   name: filebeat
@@ -171,7 +171,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: filebeat
-  namespace: default
+  namespace: elastic-system
   labels:
     k8s-app: filebeat
 ---

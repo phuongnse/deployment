@@ -3,18 +3,18 @@ kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
   name: elasticsearch-storage-class
-  namespace: default
+  namespace: elastic-system
 provisioner: kubernetes.io/portworx-volume
 ---
 apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
 metadata:
   name: elasticsearch
-  namespace: default
+  namespace: elastic-system
 spec:
   version: 7.7.0
   nodeSets:
-  - name: default
+  - name: elastic-system
     count: 1
     config:
       node.master: true
