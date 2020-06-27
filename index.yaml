@@ -1,8 +1,39 @@
----
 apiVersion: v1
 kind: Namespace
 metadata:
   name: index
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: index-deployment
+  namespace: index
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19.0
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: index-service
+  namespace: index
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: nginx
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
@@ -18,3 +49,24 @@ spec:
     - phuongn.dev
     - '*.phuongn.dev'
 ---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: index-ingress
+  namespace: index
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - phuongn.dev
+        - '*.phuongn.dev'
+      secretName: index-secret
+  rules:
+    - host: phuongn.dev
+      http:
+        paths:
+          - backend:
+              serviceName: nginx
+              servicePort: 80
