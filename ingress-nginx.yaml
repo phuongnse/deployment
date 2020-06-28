@@ -295,6 +295,11 @@ spec:
       protocol: TCP
       targetPort: https
       nodePort: 30002
+    - name: proxied-tcp-5432
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+      nodePort: 30003
   selector:
     app.kubernetes.io/name: ingress-nginx
     app.kubernetes.io/instance: ingress-nginx
