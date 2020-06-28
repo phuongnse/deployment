@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: filebeat-config-map
+  name: filebeat-config
   namespace: elastic-system
   labels:
     k8s-app: filebeat
@@ -17,6 +17,7 @@ data:
     #        matchers:
     #        - logs_path:
     #            logs_path: "/var/log/containers/"
+    
     # To enable hints based autodiscover, remove `filebeat.inputs` configuration and uncomment this:
     filebeat.autodiscover:
       providers:
@@ -27,11 +28,14 @@ data:
             type: container
             paths:
               - /var/log/containers/*${data.kubernetes.container.id}.log
+
     processors:
       - add_cloud_metadata:
       - add_host_metadata:
+
     cloud.id: ${ELASTIC_CLOUD_ID}
     cloud.auth: ${ELASTIC_CLOUD_AUTH}
+
     output.elasticsearch:
       hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
       username: ${ELASTICSEARCH_USERNAME}
@@ -117,7 +121,7 @@ spec:
       - name: config
         configMap:
           defaultMode: 0600
-          name: filebeat-config-map
+          name: filebeat-config
       - name: certs
         secret:
           secretName: elasticsearch-es-http-certs-public
