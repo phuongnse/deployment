@@ -20,6 +20,7 @@ spec:
       containers:
         - name: portfolio
           image: phuongnse/portfolio:7
+          containerPort: 3000
 ---
 apiVersion: v1
 kind: Service
