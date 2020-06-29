@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: portfolio
-          image: phuongnse/portfolio:12
+          image: phuongnse/portfolio:13
 ---
 apiVersion: v1
 kind: Service
