@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tcp-services
+  name: tcp-services-config
   namespace: ingress-nginx
 data:
   5432: "postgres-system/postgres-service:5432"
