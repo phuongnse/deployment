@@ -44,8 +44,8 @@ spec:
     name: letsencrypt-production
     kind: ClusterIssuer
   dnsNames:
-    - portfolio.phuongn.dev
-    - '*.portfolio.phuongn.dev'
+    - phuongn.dev
+    - www.phuongn.dev
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -58,11 +58,11 @@ metadata:
 spec:
   tls:
     - hosts:
-        - portfolio.phuongn.dev
-        - '*.portfolio.phuongn.dev'
+        - phuongn.dev
+        - www.phuongn.dev
       secretName: portfolio-secret
   rules:
-    - host: portfolio.phuongn.dev
+    - host: phuongn.dev
       http:
         paths:
           - backend:
