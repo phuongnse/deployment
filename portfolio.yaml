@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: portfolio
-          image: phuongnse/portfolio
+          image: phuongnse/portfolio:6
           ports:
             - containerPort: 3000
 ---
