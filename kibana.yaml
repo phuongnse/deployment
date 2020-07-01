@@ -25,7 +25,7 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - kibana.phuongn.dev
-    - '*.kibana.phuongn.dev'
+    - www.kibana.phuongn.dev
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -39,7 +39,7 @@ spec:
   tls:
     - hosts:
         - kibana.phuongn.dev
-        - '*.kibana.phuongn.dev'
+        - www.kibana.phuongn.dev
       secretName: kibana-secret
   rules:
     - host: kibana.phuongn.dev

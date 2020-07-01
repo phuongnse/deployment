@@ -106,7 +106,7 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - teamcity.phuongn.dev
-    - '*.teamcity.phuongn.dev'
+    - www.teamcity.phuongn.dev
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -120,7 +120,7 @@ spec:
   tls:
     - hosts:
         - teamcity.phuongn.dev
-        - '*.teamcity.phuongn.dev'
+        - www.teamcity.phuongn.dev
       secretName: teamcity-secret
   rules:
     - host: teamcity.phuongn.dev
