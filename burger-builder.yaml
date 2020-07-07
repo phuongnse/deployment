@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: buger-builder-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buger-builder-deployment
+  namespace: buger-builder-system
+spec:
+  selector:
+    matchLabels:
+      app: buger-builder
+  template:
+    metadata:
+      labels:
+        app: buger-builder
+    spec:
+      containers:
+        - name: buger-builder
+          image: phuongnse/buger-builder:1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: buger-builder-service
+  namespace: buger-builder-system
+spec:
+  ports:
+    - port: 3000
+      targetPort: 3000
+  selector:
+    app: buger-builder
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: buger-builder-certificate
+  namespace: buger-builder-system
+spec:
+  secretName: buger-builder-secret
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  dnsNames:
+    - phuongn.dev
+    - www.phuongn.dev
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: buger-builder-ingress
+  namespace: buger-builder-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - burger-builder.phuongn.dev
+        - www.burger-builder.phuongn.dev
+      secretName: buger-builder-secret
+  rules:
+    - host: phuongn.dev
+      http:
+        paths:
+          - backend:
+              serviceName: buger-builder-service
+              servicePort: 3000
