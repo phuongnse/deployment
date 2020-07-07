@@ -44,8 +44,8 @@ spec:
     name: letsencrypt-production
     kind: ClusterIssuer
   dnsNames:
-    - phuongn.dev
-    - www.phuongn.dev
+    - burger-builder.phuongn.dev
+    - www.burger-builder.phuongn.dev
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -62,7 +62,7 @@ spec:
         - www.burger-builder.phuongn.dev
       secretName: buger-builder-secret
   rules:
-    - host: phuongn.dev
+    - host: burger-builder.phuongn.dev
       http:
         paths:
           - backend:
