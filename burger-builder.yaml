@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: buger-builder
-          image: phuongnse/buger-builder:1
+          image: phuongnse/buger-builder:2
 ---
 apiVersion: v1
 kind: Service
@@ -28,8 +28,8 @@ metadata:
   namespace: buger-builder-system
 spec:
   ports:
-    - port: 3000
-      targetPort: 3000
+    - port: 5000
+      targetPort: 5000
   selector:
     app: buger-builder
 ---
@@ -67,4 +67,4 @@ spec:
         paths:
           - backend:
               serviceName: buger-builder-service
-              servicePort: 3000
+              servicePort: 5000
