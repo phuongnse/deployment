@@ -1,11 +1,11 @@
-# SOURCE: https://install.portworx.com/?operator=true&mc=false&kbver=&oem=esse&user=11cb8cd8-93f8-11ea-97e6-f6e09c7a4e5e&b=true&c=px-cluster-3a38158c-b025-4dc6-90a8-dbf67fa7f76c&stork=true&lh=true&st=k8s
+# SOURCE: https://install.portworx.com/?operator=true&mc=false&kbver=&oem=esse&user=11cb8cd8-93f8-11ea-97e6-f6e09c7a4e5e&b=true&s=%2Fdev%2Fsdc&c=px-cluster-3a38158c-b025-4dc6-90a8-dbf67fa7f76c&stork=true&lh=true&st=k8s
 kind: StorageCluster
 apiVersion: core.libopenstorage.org/v1
 metadata:
   name: px-cluster-3a38158c-b025-4dc6-90a8-dbf67fa7f76c
   namespace: kube-system
   annotations:
-    portworx.io/install-source: "https://install.portworx.com/?operator=true&mc=false&kbver=&oem=esse&user=11cb8cd8-93f8-11ea-97e6-f6e09c7a4e5e&b=true&c=px-cluster-3a38158c-b025-4dc6-90a8-dbf67fa7f76c&stork=true&lh=true&st=k8s"
+    portworx.io/install-source: "https://install.portworx.com/?operator=true&mc=false&kbver=&oem=esse&user=11cb8cd8-93f8-11ea-97e6-f6e09c7a4e5e&b=true&s=%2Fdev%2Fsdc&c=px-cluster-3a38158c-b025-4dc6-90a8-dbf67fa7f76c&stork=true&lh=true&st=k8s"
     portworx.io/misc-args: "--oem esse"
 spec:
   image: portworx/oci-monitor:2.6.3
@@ -13,7 +13,8 @@ spec:
   kvdb:
     internal: true
   storage:
-    useAll: true
+    devices:
+    - /dev/sdc
   secretsProvider: k8s
   stork:
     enabled: true
