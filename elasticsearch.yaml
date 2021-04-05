@@ -1,3 +1,10 @@
 ---
 # Kubernetes replica count for the StatefulSet (i.e. how many pods)
 replicas: 1
+
+# Extra environment variables which will be appended to the env: definition for the container
+extraEnvs:
+  - name: discovery.type
+    value: single-node
+  - name: cluster.initial_master_nodes
+    value: null
