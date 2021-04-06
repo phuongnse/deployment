@@ -1,0 +1,34 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: logs
+spec:
+  secretName: logs
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  dnsNames:
+    - logs.phuongn.dev
+    - www.logs.phuongn.dev
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: logs
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/from-to-www-redirect: true
+spec:
+  tls:
+    - hosts:
+        - logs.phuongn.dev
+        - www.logs.phuongn.dev
+      secretName: logs
+  rules:
+    - host: logs.phuongn.dev
+      http:
+        paths:
+          - backend:
+              serviceName: kibana-kibana
+              servicePort: 5601
