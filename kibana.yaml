@@ -1,8 +1,8 @@
 ---
 kibanaConfig:
   kibana.yml: |
-    logging:
-      verbose: true
+    server:
+      host: "0"
 ingress:
   enabled: true
   annotations:
