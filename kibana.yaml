@@ -1,8 +1,8 @@
 ---
 kibanaConfig:
   kibana.yml: |
-    csp:
-      strict: false
+    logging:
+      verbose: true
 ingress:
   enabled: true
   annotations:
