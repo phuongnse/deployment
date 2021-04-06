@@ -1,4 +1,8 @@
 ---
+kibanaConfig:
+  kibana.yml: |
+    csp:
+      strict: false
 ingress:
   enabled: true
   annotations:
