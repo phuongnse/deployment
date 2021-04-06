@@ -18,7 +18,7 @@ metadata:
   name: logs
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/from-to-www-redirect: true
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
   tls:
     - hosts:
