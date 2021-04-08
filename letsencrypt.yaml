@@ -13,4 +13,4 @@ spec:
           email: phuongnse@gmail.com
           apiTokenSecretRef:
             name: cloudflare-api-token
-            key: token
+            key: api-token
