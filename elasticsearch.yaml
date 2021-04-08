@@ -1,9 +1,0 @@
----
-# Kubernetes replica count for the StatefulSet (i.e. how many pods)
-replicas: 1
-# The value for discovery.zen.minimum_master_nodes. 
-# Should be set to (master_eligible_nodes / 2) + 1. 
-# Ignored in Elasticsearch versions >= 7
-minimumMasterNodes: 1
-# The Elasticsearch cluster health status params that will be used by readiness probe command
-clusterHealthCheckParams: 'wait_for_status=yellow&timeout=1s'
