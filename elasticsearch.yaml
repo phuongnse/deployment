@@ -1,5 +1,3 @@
 ---
-# The Elasticsearch Docker image tag
-imageTag: 7.7.0
 # Kubernetes replica count for the StatefulSet (i.e. how many pods)
 replicas: 1

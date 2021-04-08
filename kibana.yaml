@@ -1,6 +1,4 @@
 ---
-# The Kibana Docker image tag
-imageTag: 7.7.0
 # Configurable ingress to expose the Kibana service.
 ingress:
   enabled: true
