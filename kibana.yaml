@@ -1,8 +1,4 @@
 ---
-kibanaConfig:
-  kibana.yml: |
-    server:
-      host: "0"
 ingress:
   enabled: true
   annotations:
