@@ -1,0 +1,32 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: kibana-acme
+  namespace: elasticsearch
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: kibana-acme
+    solvers:
+    - dns01:
+        cloudflare:
+          email: phuongnse@gmail.com
+          apiTokenSecretRef:
+            name: cloudflare-api-token
+            key: api-token
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: logs
+  namespace: elasticsearch
+spec:
+  secretName: logs
+  issuerRef:
+    name: kibana-acme
+    kind: ClusterIssuer
+  dnsNames:
+    - logs.phuongn.dev
+    - www.logs.phuongn.dev

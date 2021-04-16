@@ -1,16 +1,92 @@
 ---
-# Configurable ingress to expose the Kibana service.
-ingress:
-  enabled: true
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: logs.phuongn.dev
-      paths:
-        - path: /
-  tls:
-    - secretName: logs
-      hosts:
-        - logs.phuongn.dev
-        - www.logs.phuongn.dev
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: elasticsearch
+  name: kibana
+  labels:
+    app: kibana
+data:
+  kibana.yml: |-
+    server.host: 0.0.0.0
+    server.ssl.enabled: true
+    server.ssl.certificate: /usr/share/kibana/config/certs/kibana/tls.crt
+    server.ssl.key: /usr/share/kibana/config/certs/kibana/tls.key
+    elasticsearch: 
+      hosts: ${ELASTICSEARCH_HOSTS}
+      username: ${ELASTICSEARCH_USER}
+      password: ${ELASTICSEARCH_PASSWORD}
+      ssl:
+        key: /usr/share/kibana/config/certs/es/tls.key
+        certificate: /usr/share/kibana/config/certs/es/tls.crt
+        certificateAuthorities: /usr/share/kibana/config/certs/es/ca.crt
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: elasticsearch
+  name: kibana
+  labels:
+    app: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+      - name: kibana
+        image: docker.elastic.co/kibana/kibana:7.6.1
+        ports:
+        - containerPort: 5601
+          name: kibana
+        env:
+        - name: ELASTICSEARCH_HOSTS
+          value: "http://elasticsearch-client:9200"
+        - name: ELASTICSEARCH_USER
+          value: "elastic"
+        - name: ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: elastic-password
+              key: password
+        volumeMounts:
+        - name: kibana
+          mountPath: /usr/share/kibana/config/kibana.yml
+          readOnly: true
+          subPath: kibana.yml
+        - name: elasticsearch-client
+          mountPath: /usr/share/kibana/config/certs/es
+          readOnly: true
+        - name: logs
+          mountPath: /usr/share/kibana/config/certs/kibana
+          readOnly: true
+      volumes:
+      - name: kibana
+        configMap:
+          name: kibana
+      - name: elasticsearch-client
+        secret:
+          secretName: elasticsearch-client
+      - name: logs
+        secret:
+          secretName: logs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: elasticsearch
+  labels:
+    service: kibana
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 5601
+    name: kibana
+  selector:
+    app: kibana

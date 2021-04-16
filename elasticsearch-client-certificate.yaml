@@ -1,0 +1,22 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: elasticsearch-client-self-signed
+  namespace: elasticsearch
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: elasticsearch-client
+  namespace: elasticsearch
+spec:
+  isCA: true
+  dnsNames:
+    - elasticsearch-client
+  issuerRef:
+    kind: Issuer
+    name: elasticsearch-client-self-signed
+  secretName: elasticsearch-client
