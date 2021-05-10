@@ -1,5 +1,333 @@
 ---
 apiVersion: v1
-kind: Namespace
+kind: ConfigMap
 metadata:
-  name: elasticsearch
+  namespace: elasticsearch
+  name: elasticsearch-master
+  labels:
+    app: elasticsearch
+    role: master
+data:
+  elasticsearch.yml: |-
+    cluster.name: ${CLUSTER_NAME}
+    node.name: ${NODE_NAME}
+    discovery.seed_hosts: ${NODE_LIST}
+    cluster.initial_master_nodes: ${MASTER_NODES}
+    network.host: 0.0.0.0
+    node:
+      master: true
+      data: false
+      ingest: false
+    xpack.security.enabled: true
+    xpack.security.transport.ssl.enabled: true
+    xpack.security.transport.ssl.verification_mode: full
+    xpack.security.transport.ssl.keystore.path: /usr/share/elasticsearch/config/elasticsearch-certificate.p12
+    xpack.security.transport.ssl.truststore.path: /usr/share/elasticsearch/config/elasticsearch-certificate.p12
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: elasticsearch
+  name: elasticsearch-master
+  labels:
+    app: elasticsearch
+    role: master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+      role: master
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        role: master
+    spec:
+      containers:
+      - name: elasticsearch-master
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.11.2
+        env:
+        - name: CLUSTER_NAME
+          value: elasticsearch
+        - name: NODE_NAME
+          value: elasticsearch-master
+        - name: NODE_LIST
+          value: elasticsearch-master,elasticsearch-data,elasticsearch-client
+        - name: MASTER_NODES
+          value: elasticsearch-master
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POD_SERVICE_NAME
+          value: elasticsearch-master
+        - name: POD_SERVICE_NAME_HEADLESS
+          value: elasticsearch-master-headless
+        - name: ES_JAVA_OPTS
+          value: -Xms256m -Xmx256m
+        ports:
+        - containerPort: 9300
+          name: transport
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          readOnly: true
+          subPath: elasticsearch.yml
+        - name: storage
+          mountPath: /data
+      volumes:
+      - name: config
+        configMap:
+          name: elasticsearch-master
+      - name: storage
+        emptyDir:
+          medium: ""
+      - name: elasticsearch-ca
+        secret:
+          secretName: elasticsearch-ca
+      initContainers:
+      - name: increase-vm-max-map
+        image: busybox
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      - name: setup-tls
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.11.2
+        command:
+        - sh
+        - -c
+        - |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          elasticsearch-certutil cert \
+            --name ${NODE_NAME} \
+            --ip ${POD_IP} \
+            --dns ${NODE_NAME},${POD_SERVICE_NAME},${POD_SERVICE_NAME_HEADLESS},${NODE_NAME}.${POD_SERVICE_NAME},${NODE_NAME}.${POD_SERVICE_NAME_HEADLESS} \
+            --ca-cert /usr/share/elasticsearch/config/tls.crt \
+            --ca-key /usr/share/elasticsearch/config/tls.key  \
+            --ca-pass "" \
+            --pass "" \
+            --out /usr/share/elasticsearch/config/elasticsearch-certificate.p12
+        volumeMounts:
+        - name: elasticsearch-ca
+          mountPath: /usr/share/elasticsearch/config
+          readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: elasticsearch
+  name: elasticsearch-master
+  labels:
+    app: elasticsearch
+    role: master
+spec:
+  ports:
+  - port: 9300
+    name: transport
+  selector:
+    app: elasticsearch
+    role: master
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   namespace: elasticsearch
+#   name: elasticsearch-data
+#   labels:
+#     app: elasticsearch
+#     role: data
+# data:
+#   elasticsearch.yml: |-
+#     cluster.name: ${CLUSTER_NAME}
+#     node.name: ${NODE_NAME}
+#     discovery.seed_hosts: ${NODE_LIST}
+#     cluster.initial_master_nodes: ${MASTER_NODES}
+#     network.host: 0.0.0.0
+#     node:
+#       master: false
+#       data: true
+#       ingest: false
+#     xpack.security.enabled: true
+#     xpack.monitoring.collection.enabled: true
+# ---
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   namespace: elasticsearch
+#   name: elasticsearch-data
+#   labels:
+#     app: elasticsearch
+#     role: data
+# spec:
+#   selector:
+#     matchLabels:
+#       app: elasticsearch-data
+#       role: data
+#   serviceName: elasticsearch-data
+#   replicas: 1
+#   template:
+#     metadata:
+#       labels:
+#         app: elasticsearch-data
+#         role: data
+#     spec:
+#       containers:
+#       - name: elasticsearch-data
+#         image: docker.elastic.co/elasticsearch/elasticsearch:7.11.2
+#         env:
+#         - name: CLUSTER_NAME
+#           value: elasticsearch
+#         - name: NODE_NAME
+#           value: elasticsearch-data
+#         - name: NODE_LIST
+#           value: elasticsearch-master,elasticsearch-data,elasticsearch-client
+#         - name: MASTER_NODES
+#           value: elasticsearch-master
+#         - name: "ES_JAVA_OPTS"
+#           value: "-Xms300m -Xmx300m"
+#         ports:
+#         - containerPort: 9300
+#           name: transport
+#         volumeMounts:
+#         - name: config
+#           mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+#           readOnly: true
+#           subPath: elasticsearch.yml
+#         - name: elasticsearch-data
+#           mountPath: /data/db
+#       volumes:
+#       - name: config
+#         configMap:
+#           name: elasticsearch-data
+#       initContainers:
+#       - name: increase-vm-max-map
+#         image: busybox
+#         command: ["sysctl", "-w", "vm.max_map_count=262144"]
+#         securityContext:
+#           privileged: true
+#   volumeClaimTemplates:
+#   - metadata:
+#       name: elasticsearch-data
+#     spec:
+#       accessModes: [ "ReadWriteOnce" ]
+#       resources:
+#         requests:
+#           storage: 5Gi
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   namespace: elasticsearch
+#   name: elasticsearch-data
+#   labels:
+#     app: elasticsearch
+#     role: data
+# spec:
+#   ports:
+#   - port: 9300
+#     name: transport
+#   selector:
+#     app: elasticsearch
+#     role: data
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   namespace: elasticsearch
+#   name: elasticsearch-client
+#   labels:
+#     app: elasticsearch
+#     role: client
+# data:
+#   elasticsearch.yml: |-
+#     cluster.name: ${CLUSTER_NAME}
+#     node.name: ${NODE_NAME}
+#     discovery.seed_hosts: ${NODE_LIST}
+#     cluster.initial_master_nodes: ${MASTER_NODES}
+#     network.host: 0.0.0.0
+#     node:
+#       master: false
+#       data: false
+#       ingest: true
+#     xpack.security.enabled: true
+#     xpack.monitoring.collection.enabled: true
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   namespace: elasticsearch
+#   name: elasticsearch-client
+#   labels:
+#     app: elasticsearch
+#     role: client
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: elasticsearch
+#       role: client
+#   template:
+#     metadata:
+#       labels:
+#         app: elasticsearch
+#         role: client
+#     spec:
+#       containers:
+#       - name: elasticsearch-client
+#         image: docker.elastic.co/elasticsearch/elasticsearch:7.11.2
+#         env:
+#         - name: CLUSTER_NAME
+#           value: elasticsearch
+#         - name: NODE_NAME
+#           value: elasticsearch-client
+#         - name: NODE_LIST
+#           value: elasticsearch-master,elasticsearch-data,elasticsearch-client
+#         - name: MASTER_NODES
+#           value: elasticsearch-master
+#         - name: "ES_JAVA_OPTS"
+#           value: "-Xms256m -Xmx256m"
+#         ports:
+#         - containerPort: 9200
+#           name: client
+#         - containerPort: 9300
+#           name: transport
+#         volumeMounts:
+#         - name: config
+#           mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+#           readOnly: true
+#           subPath: elasticsearch.yml
+#         - name: storage
+#           mountPath: /data
+#       volumes:
+#       - name: config
+#         configMap:
+#           name: elasticsearch-client
+#       - name: "storage"
+#         emptyDir:
+#           medium: ""
+#       initContainers:
+#       - name: increase-vm-max-map
+#         image: busybox
+#         command: ["sysctl", "-w", "vm.max_map_count=262144"]
+#         securityContext:
+#           privileged: true
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   namespace: elasticsearch
+#   name: elasticsearch-client
+#   labels:
+#     app: elasticsearch
+#     role: client
+# spec:
+#   ports:
+#   - port: 9200
+#     name: client
+#   - port: 9300
+#     name: transport
+#   selector:
+#     app: elasticsearch
+#     role: client

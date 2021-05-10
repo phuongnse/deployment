@@ -16,10 +16,6 @@ data:
       hosts: ${ELASTICSEARCH_HOSTS}
       username: ${ELASTICSEARCH_USER}
       password: ${ELASTICSEARCH_PASSWORD}
-      ssl:
-        key: /usr/share/kibana/config/certs/es/tls.key
-        certificate: /usr/share/kibana/config/certs/es/tls.crt
-        certificateAuthorities: /usr/share/kibana/config/certs/es/ca.crt
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -40,7 +36,7 @@ spec:
     spec:
       containers:
       - name: kibana
-        image: docker.elastic.co/kibana/kibana:7.6.1
+        image: docker.elastic.co/kibana/kibana:7.11.2
         ports:
         - containerPort: 5601
           name: kibana
@@ -59,9 +55,9 @@ spec:
           mountPath: /usr/share/kibana/config/kibana.yml
           readOnly: true
           subPath: kibana.yml
-        - name: elasticsearch-client
-          mountPath: /usr/share/kibana/config/certs/es
-          readOnly: true
+        # - name: elasticsearch-client
+        #   mountPath: /usr/share/kibana/config/certs/es
+        #   readOnly: true
         - name: logs
           mountPath: /usr/share/kibana/config/certs/kibana
           readOnly: true
@@ -69,9 +65,9 @@ spec:
       - name: kibana
         configMap:
           name: kibana
-      - name: elasticsearch-client
-        secret:
-          secretName: elasticsearch-client
+      # - name: elasticsearch-client
+      #   secret:
+      #     secretName: elasticsearch-client
       - name: logs
         secret:
           secretName: logs
@@ -84,9 +80,35 @@ metadata:
   labels:
     service: kibana
 spec:
-  type: LoadBalancer
   ports:
   - port: 5601
     name: kibana
   selector:
     app: kibana
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana
+  namespace: elasticsearch
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - logs.phuongn.dev
+        - www.logs.phuongn.dev
+      secretName: logs
+  rules:
+    - host: logs.phuongn.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kibana
+                port:
+                  number: 5601
